@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
 <body>
-<div th:replace="layout :: {}">
+<div th:replace="~{layout :: layout(~{::content})}">
   <div th:fragment="content">
     <h1>Access Denied</h1>
     
