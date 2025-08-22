@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<body>
+<div th:replace="layout :: {}">
+  <div th:fragment="content">
+    <h1>Verify Email</h1>
+    
+<p>We sent you a verification code. Enter it to activate your account.</p>
+<form th:action="@{/verify-email}" method="post">
+  <label>Code
+    <input type="text" name="code" required>
+  </label>
+  <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+  <button type="submit">Verify</button>
+</form>
+<p class="muted"><a href="#" aria-disabled="true">Resend code</a> (wire up later)</p>
+
+  </div>
+</div>
+</body>
+</html>

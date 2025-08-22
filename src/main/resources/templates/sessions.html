@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<body>
+<div th:replace="layout :: {}">
+  <div th:fragment="content">
+    <h1>Active Sessions</h1>
+    
+<table>
+  <thead><tr><th>Session ID</th><th>IP</th><th>Last Used</th><th>Actions</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>abc123</td><td>127.0.0.1</td><td>just now</td>
+      <td>
+        <form th:action="@{/account/sessions/revoke}" method="post" style="display:inline">
+          <input type="hidden" name="sessionId" value="abc123"/>
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+          <button type="submit">Revoke</button>
+        </form>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="muted">Replace with dynamic data later.</p>
+
+  </div>
+</div>
+</body>
+</html>

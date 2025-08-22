@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<body>
+<div th:replace="layout :: {}">
+  <div th:fragment="content">
+    <h1>Admin Dashboard</h1>
+    
+<p>Admin-only area. Lock this down later.</p>
+<ul>
+  <li><a th:href="@{/admin/users}">Users</a></li>
+</ul>
+
+  </div>
+</div>
+</body>
+</html>

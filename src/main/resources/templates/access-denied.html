@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<body>
+<div th:replace="layout :: {}">
+  <div th:fragment="content">
+    <h1>Access Denied</h1>
+    
+<p class="danger">Access denied. You don't have permission to view this page.</p>
+<p><a th:href="@{/}">Go home</a></p>
+
+  </div>
+</div>
+</body>
+</html>

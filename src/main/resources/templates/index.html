@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<body>
+<div th:replace="layout :: {}">
+  <div th:fragment="content">
+    <h1>Security Playground</h1>
+    
+<p>Welcome! This app is intentionally insecure at first so you can harden it step-by-step.</p>
+<ul>
+  <li><a th:href="@{/login}">Login</a> / <a th:href="@{/register}">Register</a></li>
+  <li><a th:href="@{/account/profile}">My Profile</a> (should be protected later)</li>
+  <li><a th:href="@{/admin}">Admin Dashboard</a> (admin-only later)</li>
+  <li><a th:href="@{/mfa/setup}">Set up MFA (TOTP)</a></li>
+</ul>
+
+  </div>
+</div>
+</body>
+</html>
