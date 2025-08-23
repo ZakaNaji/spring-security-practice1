@@ -1,5 +1,7 @@
 package com.example.secplayground;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +16,8 @@ public class AccountController {
     @GetMapping("/profile")
     public String profile(Model model) {
         // TODO: load current user details
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        model.addAttribute("principal", authentication);
         return "profile";
     }
 
