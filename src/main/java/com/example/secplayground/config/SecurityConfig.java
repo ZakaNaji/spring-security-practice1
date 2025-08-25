@@ -1,12 +1,16 @@
-package com.example.secplayground;
+package com.example.secplayground.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -19,13 +23,15 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/account/**").authenticated()
+                        .requestMatchers("/account/**").hasRole("USER")
                         .requestMatchers("/", "/login", "/register", "/verify-email",
                                 "/forgot-password", "/reset-password",
                                 "/access-denied", "/mfa/**", "/consent").permitAll()
-                        .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/static/**").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/static/**", "/h2-console/**").permitAll()
                 )
-                .csrf(Customizer.withDefaults())
+                .csrf(csrfConfig -> csrfConfig.ignoringRequestMatchers("/h2-console/**"))
+                .headers(headersConfig -> headersConfig
+                        .frameOptions(frameConfig -> frameConfig.sameOrigin()))
                 .formLogin(login -> login
                         .loginPage("/login").permitAll()
 
@@ -41,19 +47,13 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService() {
-        UserDetails user = User
-                .withUsername("user")
-                .password("{noop}1234")
-                .roles("USER")
-                .build();
-        UserDetails admin = User
-                .withUsername("admin")
-                .password("{noop}1234")
-                .roles("ADMIN")
-                .build();
-        var users = List.of(user, admin);
-        return new InMemoryUserDetailsManager(users);
+    public PasswordEncoder passwordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+
+    @Bean
+    public RoleHierarchy roleHierarchy() {
+        return RoleHierarchyImpl.fromHierarchy("ROLE_ADMIN > ROLE_USER");
     }
 
 }
