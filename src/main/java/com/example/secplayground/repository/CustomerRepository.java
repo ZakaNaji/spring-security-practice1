@@ -12,4 +12,8 @@ import java.util.Optional;
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
     @Query("SELECT distinct c FROM Customer c left join fetch c.authorities where c.username= :username")//to not get lazyLoading exception
     Optional<Customer> findCustomerByUsername(String username);
+
+    boolean existsByUsernameIgnoreCase(String username);
+
+    boolean existsByEmailIgnoreCase(String email);
 }
