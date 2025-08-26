@@ -20,6 +20,8 @@ public class Customer {
 
     private String password;
 
+    private String email;
+
     private boolean enabled = true;
     private boolean accountNonExpired = true;
     private boolean accountNonLocked = true;
