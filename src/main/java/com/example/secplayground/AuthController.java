@@ -1,22 +1,23 @@
 package com.example.secplayground;
 
+import com.example.secplayground.dto.RegisterForm;
+import com.example.secplayground.exception.EmailAlreadyExistsException;
+import com.example.secplayground.exception.UsernameAlreadyExistsException;
 import com.example.secplayground.model.Authority;
 import com.example.secplayground.model.Customer;
 import com.example.secplayground.repository.AuthorityRepository;
 import com.example.secplayground.repository.CustomerRepository;
+import com.example.secplayground.service.RegistrationService;
 import jakarta.annotation.PostConstruct;
+import jakarta.validation.Valid;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Controller
 public class AuthController {
@@ -24,11 +25,13 @@ public class AuthController {
     private final CustomerRepository customerRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthorityRepository authorityRepository;
+    private final RegistrationService registrationService;
 
-    public AuthController(CustomerRepository customerRepository, PasswordEncoder passwordEncoder, AuthorityRepository authorityRepository) {
+    public AuthController(CustomerRepository customerRepository, PasswordEncoder passwordEncoder, AuthorityRepository authorityRepository, RegistrationService registrationService) {
         this.customerRepository = customerRepository;
         this.passwordEncoder = passwordEncoder;
         this.authorityRepository = authorityRepository;
+        this.registrationService = registrationService;
     }
 
 
@@ -43,35 +46,46 @@ public class AuthController {
         return "redirect:/";
     }
 
+    @ModelAttribute("form")
+    public RegisterForm initForm() {
+        return new RegisterForm();
+    }
+
     @GetMapping("/register")
     public String registerForm() {
         return "register";
     }
 
     @PostMapping("/register")
-    public String doRegister(@RequestParam String username,
-                             @RequestParam String email,
-                             @RequestParam String password,
-                             @RequestParam String confirm) {
-        customerRepository.findCustomerByUsername(username)
-                .ifPresent((c) -> {
-                    throw new RuntimeException("customer with username: " + c.getUsername() + " exist already");
-                });
-        if (!password.equals(confirm)) {
-            throw new RuntimeException("Password doesn't match with the confirmation");
+    public String doRegister(@Valid @ModelAttribute("form") RegisterForm form,
+                             BindingResult bindingResult,
+                             RedirectAttributes redirectAttributes) {
+        if (!Objects.equals(form.getPassword(), form.getConfirm())) {
+            bindingResult.rejectValue("password", "mismatch", "Passwords do not match");
         }
-        Customer customer = new Customer();
-        customer.setUsername(username);
-        customer.setPassword(passwordEncoder.encode(password));
-        customer.setEnabled(false);
-        customer.setEmail(email);
-        Authority roleUser = authorityRepository.findByTitle("ROLE_USER")
-                .orElseThrow(() -> new IllegalStateException("ROLE_USER not found"));
-        customer.getAuthorities().add(roleUser);
-        roleUser.getCustomers().add(customer);
-
-        customerRepository.save(customer);
-        return "redirect:/verify-email";
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.form", bindingResult);
+            redirectAttributes.addFlashAttribute("form", form);
+            return "redirect:/register";
+        }
+        
+        try {
+            String token = registrationService.register(form);
+            redirectAttributes.addFlashAttribute("message", "we emailed you a verification token");
+            redirectAttributes.addFlashAttribute("token", token);
+            return "redirect:/verify-email";
+        } catch (UsernameAlreadyExistsException e) {
+            redirectAttributes.addFlashAttribute("form", form);
+            redirectAttributes.addFlashAttribute("error", "Username exists already");
+            return "redirect:/register";
+        } catch (EmailAlreadyExistsException e) {
+            redirectAttributes.addFlashAttribute("form", form);
+            redirectAttributes.addFlashAttribute("error", "Email exists already");
+            return "redirect:/register";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "something went wrong: " + e.getMessage());
+            return "redirect:/register";
+        }
     }
 
     @GetMapping("/verify-email")
