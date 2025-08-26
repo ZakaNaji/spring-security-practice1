@@ -15,7 +15,7 @@ public class AccountController {
 
     @GetMapping("/profile")
     public String profile(Model model) {
-        // TODO: load current user details
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         model.addAttribute("principal", authentication);
         return "profile";
