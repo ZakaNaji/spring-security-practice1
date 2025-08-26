@@ -1,4 +1,4 @@
-package com.example.secplayground;
+package com.example.secplayground.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

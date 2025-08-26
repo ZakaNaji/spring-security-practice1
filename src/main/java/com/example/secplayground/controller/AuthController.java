@@ -1,14 +1,11 @@
-package com.example.secplayground;
+package com.example.secplayground.controller;
 
 import com.example.secplayground.dto.RegisterForm;
 import com.example.secplayground.exception.EmailAlreadyExistsException;
 import com.example.secplayground.exception.UsernameAlreadyExistsException;
-import com.example.secplayground.model.Authority;
-import com.example.secplayground.model.Customer;
 import com.example.secplayground.repository.AuthorityRepository;
 import com.example.secplayground.repository.CustomerRepository;
 import com.example.secplayground.service.RegistrationService;
-import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;

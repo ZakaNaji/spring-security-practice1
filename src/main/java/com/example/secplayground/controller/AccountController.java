@@ -1,4 +1,4 @@
-package com.example.secplayground;
+package com.example.secplayground.controller;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
