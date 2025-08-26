@@ -1,5 +1,6 @@
 package com.example.secplayground.config;
 
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
@@ -28,6 +29,8 @@ public class SecurityConfig {
                                 "/forgot-password", "/reset-password",
                                 "/access-denied", "/mfa/**", "/consent").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/static/**", "/h2-console/**").permitAll()
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                        .requestMatchers("/error").permitAll()
                 )
                 .csrf(csrfConfig -> csrfConfig.ignoringRequestMatchers("/h2-console/**"))
                 .headers(headersConfig -> headersConfig
