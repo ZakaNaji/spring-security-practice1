@@ -28,6 +28,14 @@ public class DBUserDetailsManager implements UserDetailsService {
         List<SimpleGrantedAuthority> authorities = customer.getAuthorities().stream()
                 .map(auth -> new SimpleGrantedAuthority(auth.getTitle()))
                 .toList();
-        return new User(customer.getUsername(), customer.getPassword(), authorities);
+        return User
+                .withUsername(customer.getUsername())
+                .password(customer.getPassword())
+                .authorities(authorities)
+                .accountExpired(!customer.isAccountNonExpired())
+                .accountLocked(!customer.isAccountNonLocked())
+                .credentialsExpired(!customer.isCredentialsNonExpired())
+                .disabled(!customer.isEnabled())
+                .build();
     }
 }
