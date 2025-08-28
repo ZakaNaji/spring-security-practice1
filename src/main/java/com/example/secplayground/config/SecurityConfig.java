@@ -1,5 +1,6 @@
 package com.example.secplayground.config;
 
+import com.example.secplayground.handlers.FormLoginErrorHandler;
 import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,6 +38,7 @@ public class SecurityConfig {
                         .frameOptions(frameConfig -> frameConfig.sameOrigin()))
                 .formLogin(login -> login
                         .loginPage("/login").permitAll()
+                        .failureHandler(new FormLoginErrorHandler())
 
                 )
                 .logout(logout -> logout
