@@ -2,6 +2,7 @@ package com.example.secplayground.controller;
 
 import com.example.secplayground.dto.RegisterForm;
 import com.example.secplayground.exception.EmailAlreadyExistsException;
+import com.example.secplayground.exception.InvalidVerificationToken;
 import com.example.secplayground.exception.UsernameAlreadyExistsException;
 import com.example.secplayground.repository.AuthorityRepository;
 import com.example.secplayground.repository.CustomerRepository;
@@ -91,8 +92,14 @@ public class AuthController {
     }
 
     @PostMapping("/verify-email")
-    public String doVerifyEmail(@RequestParam String code) {
-        // TODO
+    public String doVerifyEmail(@RequestParam String code, RedirectAttributes redirectAttributes) {
+        try {
+            registrationService.verifyToken(code);
+        } catch (InvalidVerificationToken e) {
+            redirectAttributes.addFlashAttribute("error", "something went wrong: " + e.getMessage());
+            return "redirect:/verify-email";
+        }
+        redirectAttributes.addFlashAttribute("message", "Your email is verified. You can now sign in.");
         return "redirect:/login?verified";
     }
 
