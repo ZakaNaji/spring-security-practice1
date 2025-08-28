@@ -2,7 +2,7 @@ package com.example.secplayground.service;
 
 import com.example.secplayground.dto.RegisterForm;
 import com.example.secplayground.exception.EmailAlreadyExistsException;
-import com.example.secplayground.exception.InvalidVerificationToken;
+import com.example.secplayground.exception.InvalidVerificationTokenException;
 import com.example.secplayground.exception.UsernameAlreadyExistsException;
 import com.example.secplayground.model.Authority;
 import com.example.secplayground.model.Customer;
@@ -71,9 +71,9 @@ public class RegistrationService {
     }
 
     public void verifyToken(String code) {
-        VerificationToken token = verificationTokenRepository.findByToken(code).orElseThrow(() -> new InvalidVerificationToken("Invalid token"));
+        VerificationToken token = verificationTokenRepository.findByToken(code).orElseThrow(() -> new InvalidVerificationTokenException("Invalid token"));
         if (token.isUsed() || token.getExpiresAt().isBefore(Instant.now())) {
-            throw new InvalidVerificationToken("Token is used or expired");
+            throw new InvalidVerificationTokenException("Token is used or expired");
         }
         Customer customer = token.getCustomer();
         customer.setEnabled(true);
