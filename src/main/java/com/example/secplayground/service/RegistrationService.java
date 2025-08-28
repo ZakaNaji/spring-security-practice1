@@ -17,10 +17,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.Locale;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -31,6 +32,7 @@ public class RegistrationService {
     private final AuthorityRepository authorityRepository;
     private final VerificationTokenRepository verificationTokenRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final SecureRandom random = new SecureRandom();
 
     public RegistrationService(CustomerRepository customerRepository, PasswordEncoder passwordEncoder, AuthorityRepository authorityRepository, VerificationTokenRepository verificationTokenRepository, ApplicationEventPublisher applicationEventPublisher) {
         this.customerRepository = customerRepository;
@@ -64,11 +66,7 @@ public class RegistrationService {
         customer.getAuthorities().add(role);
         customerRepository.save(customer);
 
-        VerificationToken token = new VerificationToken();
-        token.setToken(UUID.randomUUID().toString());
-        token.setCustomer(customer);
-        token.setExpiresAt(Instant.now().plus(30, ChronoUnit.MINUTES));
-        verificationTokenRepository.save(token);
+        VerificationToken token = issueToken(customer);
 
         applicationEventPublisher.publishEvent(new CustomerRegistredEvent(username, token));
 
@@ -76,16 +74,50 @@ public class RegistrationService {
     }
 
     @Transactional
-    public void verifyToken(String code) {
-        VerificationToken token = verificationTokenRepository.findByToken(code).orElseThrow(() -> new InvalidVerificationTokenException("Invalid token"));
-        if (token.isUsed() || token.getExpiresAt().isBefore(Instant.now())) {
-            throw new InvalidVerificationTokenException("Token is used or expired");
-        }
-        Customer customer = token.getCustomer();
-        customer.setEnabled(true);
-        token.setUsed(true);
+    public VerificationToken issueToken(Customer customer) {
+        verificationTokenRepository.deleteAllActiveForCustomer(customer.getId());
 
-        verificationTokenRepository.save(token);
-        customerRepository.save(customer);
+        String token = generateUrlSafeToken(48);
+        Instant now = Instant.now();
+
+        VerificationToken vt = VerificationToken.builder()
+                .token(token)
+                .customer(customer)
+                .createdAt(now)
+                .expiresAt(now.plus(30, ChronoUnit.MINUTES))
+                .used(false)
+        .build();
+        return verificationTokenRepository.save(vt);
     }
+
+    private String generateUrlSafeToken(int bytes) {
+        byte[] buf = new byte[bytes];
+        random.nextBytes(buf);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(buf);
+    }
+
+    @Transactional
+    public VerifyOutcome verifyToken(String code) {
+        VerificationToken token = verificationTokenRepository.findByToken(code).orElseThrow(() -> new InvalidVerificationTokenException("Invalid token"));
+        Instant now = Instant.now();
+
+        if (token.isExpired(now)) {
+            return VerifyOutcome.EXPIRED;
+        }
+
+        Customer c = token.getCustomer();
+        if (token.isUsed() || c.isEnabled()) {
+            return VerifyOutcome.ALREADY_VERIFIED;
+        }
+
+        int updated = verificationTokenRepository.markUsed(token.getId(), now);
+        if (updated == 0) {
+            return VerifyOutcome.ALREADY_VERIFIED;
+        }
+        c.setEnabled(true);
+        customerRepository.save(c);
+        return VerifyOutcome.SUCCESS;
+    }
+
+    public enum VerifyOutcome { SUCCESS, ALREADY_VERIFIED, EXPIRED }
 }

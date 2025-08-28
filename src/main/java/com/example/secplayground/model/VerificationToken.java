@@ -1,14 +1,15 @@
 package com.example.secplayground.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.Instant;
 
 @Entity
 @Table(name = "verification_token")
-@Getter @Setter
+@Getter @Setter @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class VerificationToken {
 
     @Id
@@ -22,7 +23,16 @@ public class VerificationToken {
     private Customer customer;
 
     @Column(nullable = false)
+    private Instant createdAt;
+
+    @Column(nullable = false)
     private Instant expiresAt;
 
     private boolean used = false;
+
+    private Instant userAt;
+
+    public boolean isExpired(Instant now) {
+       return expiresAt.isBefore(now);
+    }
 }

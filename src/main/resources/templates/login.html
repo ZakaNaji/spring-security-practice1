@@ -3,17 +3,16 @@
       xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
-  <div th:if="${message}" class="ok" th:text="${message}"></div>
-  <div th:if="${param.error}" class="danger">
-    <div th:switch="${param.error}">
-      <p th:case="'disabled'">Your account isn’t enabled yet. Please confirm your email.</p>
-      <p th:case="'locked'">Your account is locked. Contact support.</p>
-      <p th:case="'credExpired'">Your password has expired. Please reset it.</p>
-      <p th:case="'acctExpired'">Your account has expired. Contact support.</p>
-      <p th:case="*">Invalid username or password.</p>
-    </div>
-  </div>
   <div th:fragment="content">
+    <div th:if="${param.error}" class="danger" th:with="err=${param.error[0]}">
+      <div th:switch="${err}">
+        <p th:case="'disabled'">Your account isn’t enabled yet. Please confirm your email.</p>
+        <p th:case="'locked'">Your account is locked. Contact support.</p>
+        <p th:case="'credExpired'">Your password has expired. Please reset it.</p>
+        <p th:case="'acctExpired'">Your account has expired. Contact support.</p>
+        <p th:case="*">Invalid username or password.</p>
+      </div>
+    </div>
     <h1>Login</h1>
     
 <form th:action="@{/login}" method="post">

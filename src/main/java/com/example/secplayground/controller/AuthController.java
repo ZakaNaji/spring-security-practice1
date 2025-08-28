@@ -94,7 +94,12 @@ public class AuthController {
     @PostMapping("/verify-email")
     public String doVerifyEmail(@RequestParam String code, RedirectAttributes redirectAttributes) {
         try {
-            registrationService.verifyToken(code);
+            var outcome = registrationService.verifyToken(code);
+            switch (outcome) {
+                case SUCCESS -> redirectAttributes.addFlashAttribute("message", "Your email is verified. You can now sign in.");
+                case ALREADY_VERIFIED -> redirectAttributes.addFlashAttribute("message", "Your email was already verified.");
+                case EXPIRED -> redirectAttributes.addFlashAttribute("error", "This link has expired. We’ve sent you a new one if your account exists.");
+            }
         } catch (InvalidVerificationTokenException e) {
             redirectAttributes.addFlashAttribute("error", "something went wrong: " + e.getMessage());
             return "redirect:/verify-email";
