@@ -3,6 +3,7 @@
       xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
+  <div th:if="${message}" class="ok" th:text="${message}"></div>
   <div th:fragment="content">
     <h1>Login</h1>
     
