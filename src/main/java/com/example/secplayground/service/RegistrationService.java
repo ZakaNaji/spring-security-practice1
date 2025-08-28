@@ -1,6 +1,7 @@
 package com.example.secplayground.service;
 
 import com.example.secplayground.dto.RegisterForm;
+import com.example.secplayground.events.CustomerRegistredEvent;
 import com.example.secplayground.exception.EmailAlreadyExistsException;
 import com.example.secplayground.exception.InvalidVerificationTokenException;
 import com.example.secplayground.exception.UsernameAlreadyExistsException;
@@ -11,6 +12,7 @@ import com.example.secplayground.repository.VerificationTokenRepository;
 import com.example.secplayground.repository.AuthorityRepository;
 import com.example.secplayground.repository.CustomerRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,12 +30,14 @@ public class RegistrationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthorityRepository authorityRepository;
     private final VerificationTokenRepository verificationTokenRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
-    public RegistrationService(CustomerRepository customerRepository, PasswordEncoder passwordEncoder, AuthorityRepository authorityRepository, VerificationTokenRepository verificationTokenRepository) {
+    public RegistrationService(CustomerRepository customerRepository, PasswordEncoder passwordEncoder, AuthorityRepository authorityRepository, VerificationTokenRepository verificationTokenRepository, ApplicationEventPublisher applicationEventPublisher) {
         this.customerRepository = customerRepository;
         this.passwordEncoder = passwordEncoder;
         this.authorityRepository = authorityRepository;
         this.verificationTokenRepository = verificationTokenRepository;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @Transactional
@@ -65,11 +69,13 @@ public class RegistrationService {
         token.setCustomer(customer);
         token.setExpiresAt(Instant.now().plus(30, ChronoUnit.MINUTES));
         verificationTokenRepository.save(token);
-        log.warn("Verification token for {}: {}", customer.getUsername(), token.getToken());
+
+        applicationEventPublisher.publishEvent(new CustomerRegistredEvent(username, token));
 
         return token.getToken();
     }
 
+    @Transactional
     public void verifyToken(String code) {
         VerificationToken token = verificationTokenRepository.findByToken(code).orElseThrow(() -> new InvalidVerificationTokenException("Invalid token"));
         if (token.isUsed() || token.getExpiresAt().isBefore(Instant.now())) {
@@ -78,5 +84,8 @@ public class RegistrationService {
         Customer customer = token.getCustomer();
         customer.setEnabled(true);
         token.setUsed(true);
+
+        verificationTokenRepository.save(token);
+        customerRepository.save(customer);
     }
 }
