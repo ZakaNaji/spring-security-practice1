@@ -2,11 +2,12 @@ package com.example.secplayground.service;
 
 import com.example.secplayground.dto.RegisterForm;
 import com.example.secplayground.exception.EmailAlreadyExistsException;
+import com.example.secplayground.exception.InvalidVerificationToken;
 import com.example.secplayground.exception.UsernameAlreadyExistsException;
 import com.example.secplayground.model.Authority;
 import com.example.secplayground.model.Customer;
 import com.example.secplayground.model.VerificationToken;
-import com.example.secplayground.model.VerificationTokenRepository;
+import com.example.secplayground.repository.VerificationTokenRepository;
 import com.example.secplayground.repository.AuthorityRepository;
 import com.example.secplayground.repository.CustomerRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -61,10 +63,20 @@ public class RegistrationService {
         VerificationToken token = new VerificationToken();
         token.setToken(UUID.randomUUID().toString());
         token.setCustomer(customer);
-        token.setExpiresAt(Instant.now());
+        token.setExpiresAt(Instant.now().plus(30, ChronoUnit.MINUTES));
         verificationTokenRepository.save(token);
         log.warn("Verification token for {}: {}", customer.getUsername(), token.getToken());
 
         return token.getToken();
+    }
+
+    public void verifyToken(String code) {
+        VerificationToken token = verificationTokenRepository.findByToken(code).orElseThrow(() -> new InvalidVerificationToken("Invalid token"));
+        if (token.isUsed() || token.getExpiresAt().isBefore(Instant.now())) {
+            throw new InvalidVerificationToken("Token is used or expired");
+        }
+        Customer customer = token.getCustomer();
+        customer.setEnabled(true);
+        token.setUsed(true);
     }
 }
