@@ -9,6 +9,8 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -48,7 +50,12 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/")
                         .permitAll())
                 .exceptionHandling(exceptionConfig -> exceptionConfig
-                        .accessDeniedPage("/access-denied"));
+                        .accessDeniedPage("/access-denied"))
+                .sessionManagement(sessionCOnfig ->
+                        sessionCOnfig
+                                .sessionFixation().migrateSession()
+                                .maximumSessions(5)
+                                .maxSessionsPreventsLogin(false));
 
         return http.build();
     }
@@ -63,4 +70,8 @@ public class SecurityConfig {
         return RoleHierarchyImpl.fromHierarchy("ROLE_ADMIN > ROLE_USER");
     }
 
+    @Bean
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
 }
