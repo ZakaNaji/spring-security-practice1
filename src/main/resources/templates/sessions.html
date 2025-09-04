@@ -5,23 +5,40 @@
 <div th:replace="~{layout :: layout(~{::content})}">
   <div th:fragment="content">
     <h1>Active Sessions</h1>
-    
-<table>
-  <thead><tr><th>Session ID</th><th>IP</th><th>Last Used</th><th>Actions</th></tr></thead>
-  <tbody>
-    <tr>
-      <td>abc123</td><td>127.0.0.1</td><td>just now</td>
-      <td>
-        <form th:action="@{/account/sessions/revoke}" method="post" style="display:inline">
-          <input type="hidden" name="sessionId" value="abc123"/>
-          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-          <button type="submit">Revoke</button>
-        </form>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<p class="muted">Replace with dynamic data later.</p>
+
+    <table>
+      <thead>
+      <tr>
+        <th>Session ID</th>
+        <th>Last Used</th>
+        <th>Expired?</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="s : ${sessions}">
+        <!-- display sessionId truncated -->
+        <td th:text="${#strings.substring(s.sessionId,0,8)} + '…'"></td>
+
+        <!-- last request time -->
+        <td th:text="${#dates.format(s.lastRequest, 'yyyy-MM-dd HH:mm:ss')}"></td>
+
+        <!-- expired flag -->
+        <td th:text="${s.expired} ? 'Yes' : 'No'"></td>
+
+        <!-- revoke form -->
+        <td>
+          <form th:action="@{/account/sessions/revoke}" method="post" style="display:inline">
+            <input type="hidden" name="sessionId" th:value="${s.sessionId}"/>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" th:disabled="${s.expired}">Revoke</button>
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <p class="muted" th:if="${#lists.isEmpty(sessions)}">No active sessions.</p>
 
   </div>
 </div>
